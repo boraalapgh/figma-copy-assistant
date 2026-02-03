@@ -2,6 +2,8 @@
 
 AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 
+**[View Documentation →](https://figma-copy-assistant.vercel.app/docs)**
+
 ## Features
 
 - **Three-layer context**: System prompt (brand guidelines) + Project context (per-file) + User request
@@ -13,8 +15,8 @@ AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
-│  Figma Plugin   │────▶│  Vercel Edge Fn  │────▶│   OpenAI    │
-│  (UI + Logic)   │◀────│  (API Proxy)     │◀────│   GPT-4     │
+│  Figma Plugin   │────▶│   Next.js API    │────▶│   OpenAI    │
+│  (UI + Logic)   │◀────│   (Vercel)       │◀────│   GPT-4     │
 └─────────────────┘     └──────────────────┘     └─────────────┘
         │
         ▼
@@ -24,47 +26,59 @@ AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 └─────────────────┘
 ```
 
-## Setup
+## Quick Start
 
-### 1. Deploy the API to Vercel
+### 1. Deploy the API
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Deploy
+# Clone the repo
+git clone https://github.com/boraalapgh/figma-copy-assistant.git
 cd figma-copy-assistant
+
+# Install dependencies
+npm install
+
+# Deploy to Vercel
 vercel
 
-# Set environment variable
+# Add your OpenAI API key
 vercel env add OPENAI_API_KEY
+
+# Deploy to production
+vercel --prod
 ```
 
 ### 2. Install the Figma Plugin
 
-1. Open Figma Desktop
-2. Go to Plugins → Development → Import plugin from manifest
-3. Select the `manifest.json` from this repo
+```bash
+# Build the plugin
+npm run figma:build
+```
 
-### 3. Configure the Plugin
+Then in Figma Desktop:
+1. Go to **Plugins → Development → Import plugin from manifest**
+2. Select the `manifest.json` from this repo
 
-1. Open the plugin in Figma
-2. Go to Settings tab
-3. Enter your Vercel API endpoint: `https://your-project.vercel.app/api/generate`
-4. Save
+### 3. Update API Endpoint (if needed)
+
+The API endpoint is configured in `ui.html` at line 286. Update it to match your Vercel deployment:
+
+```javascript
+const API_ENDPOINT = 'https://your-project.vercel.app/api/generate';
+```
 
 ## Usage
 
 1. **Set Project Context** (once per file)
-   - Open plugin → Context tab
+   - Open plugin → Project Context tab
    - Describe your project, audience, terminology
-   - Save
+   - Click Save Context
 
 2. **Generate Copy**
-   - Select a text layer
-   - Open plugin
-   - Either type your request or use a shortcut
-   - Click Generate
+   - Select a text layer in your design
+   - Open the plugin
+   - Type your request or use a quick shortcut
+   - Click Generate Copy
    - Apply or Copy the result
 
 ## Development
@@ -73,27 +87,52 @@ vercel env add OPENAI_API_KEY
 # Install dependencies
 npm install
 
-# Build plugin
-npm run build
+# Build Figma plugin
+npm run figma:build
 
-# Watch mode
-npm run watch
+# Watch mode for plugin development
+npm run figma:watch
+
+# Run Next.js dev server (for API/website)
+npm run dev
+
+# Build everything for production
+npm run build
 ```
 
-## System Prompt
+## Customization
 
-The system prompt is baked into `src/code.ts`. Edit it to match your team's writing guidelines.
+### System Prompt
+Edit the brand writing guidelines in `src/code.ts`:
+```javascript
+const SYSTEM_PROMPT = `Your brand guidelines here...`;
+```
+
+### Quick Shortcuts
+Add custom shortcuts in `ui.html`:
+```html
+<span class="shortcut" data-prompt="Your custom prompt">🎯 Label</span>
+```
+
+### AI Model
+Change the model in `app/api/generate/route.ts`:
+```javascript
+model: 'gpt-4o-mini'  // or 'gpt-4o', etc.
+```
 
 ## File Structure
 
 ```
-├── manifest.json      # Figma plugin manifest
-├── ui.html           # Plugin UI
+├── manifest.json          # Figma plugin manifest
+├── ui.html                # Plugin UI (HTML/CSS/JS)
 ├── src/
-│   └── code.ts       # Plugin logic
-├── api/
-│   └── generate.ts   # Vercel Edge Function
-├── vercel.json       # Vercel config
+│   └── code.ts            # Plugin logic (Figma API)
+├── app/
+│   ├── page.tsx           # Landing page
+│   ├── docs/page.tsx      # Documentation
+│   └── api/generate/
+│       └── route.ts       # OpenAI API proxy
+├── components/ui/         # shadcn/ui components
 └── package.json
 ```
 
