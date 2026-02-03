@@ -51,19 +51,26 @@ vercel --prod
 
 ### 2. Set Up the Figma Plugin
 
+**First time:**
 ```bash
-# Build the plugin
+# Build the plugin code
 npm run figma:build
 
-# Run the setup wizard (creates ui.html with your config)
+# Run setup wizard (prompts for secrets, saves to .env.local, creates ui.html)
 npm run figma:setup
 ```
 
-The setup wizard will prompt you for:
-- **API Endpoint** - Your Vercel deployment URL (default provided)
-- **API Secret** - The same `PLUGIN_API_SECRET` you set in Vercel
+**After template updates:**
+```bash
+npm run figma:build    # Rebuild plugin code
+npm run figma:update   # Regenerate ui.html from .env.local (no prompts)
+```
 
-This creates `figma-plugin/ui.html` which is gitignored to keep your secrets safe.
+Your secrets are stored in `.env.local` (gitignored):
+```env
+PLUGIN_API_ENDPOINT=https://figma-copy-assistant.vercel.app/api/generate
+PLUGIN_API_SECRET=your-secret-here
+```
 
 ### 3. Import into Figma
 
@@ -127,26 +134,30 @@ model: 'gpt-4o-mini'  // or 'gpt-4o', etc.
 ## File Structure
 
 ```
+├── .env.example               # Template for local secrets
+├── .env.local                 # Your local secrets (gitignored)
 ├── figma-plugin/
 │   ├── manifest.json          # Figma plugin manifest
-│   ├── ui.template.html       # UI template (copy to ui.html)
-│   ├── ui.html                # Your local config (gitignored)
+│   ├── ui.template.html       # UI template
+│   ├── ui.html                # Generated with secrets (gitignored)
 │   └── src/
-│       └── code.ts            # Plugin logic (Figma API)
+│       └── code.ts            # Plugin logic + system prompt
 ├── app/
 │   ├── page.tsx               # Landing page
 │   ├── docs/page.tsx          # Documentation
 │   └── api/generate/
 │       └── route.ts           # OpenAI API proxy
 ├── components/ui/             # shadcn/ui components
-└── package.json
+└── scripts/
+    └── setup-plugin.mjs       # Setup wizard
 ```
 
 ## Security
 
 - `OPENAI_API_KEY` - Stored in Vercel, never exposed
 - `PLUGIN_API_SECRET` - Required for all API requests, prevents unauthorized usage
-- `figma-plugin/ui.html` - Gitignored, contains your local secrets
+- `.env.local` - Gitignored, stores your local plugin secrets
+- `figma-plugin/ui.html` - Gitignored, generated from template with your secrets
 
 ## License
 

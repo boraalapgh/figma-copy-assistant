@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "figma:setup": "node scripts/setup-plugin.mjs",
+    "figma:update": "node scripts/update-plugin.mjs",
     "figma:build": "esbuild figma-plugin/src/code.ts --bundle --outfile=figma-plugin/dist/code.js --target=es6",
     "figma:watch": "esbuild figma-plugin/src/code.ts --bundle --outfile=figma-plugin/dist/code.js --target=es6 --watch"
   },

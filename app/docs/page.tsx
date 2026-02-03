@@ -164,21 +164,25 @@ export default function DocsPage() {
               </p>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Build the plugin</h4>
-                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">npm run figma:build</code>
+                <h4 className="font-medium">First-time setup</h4>
+                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 space-y-2">
+                  <code className="text-sm block">npm run figma:build</code>
+                  <code className="text-sm block">npm run figma:setup</code>
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  The setup wizard prompts for your API endpoint and secret, saves them to
+                  <code>.env.local</code>, and creates <code>figma-plugin/ui.html</code>.
+                </p>
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Run the setup wizard</h4>
-                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">npm run figma:setup</code>
+                <h4 className="font-medium">After template updates</h4>
+                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 space-y-2">
+                  <code className="text-sm block">npm run figma:build</code>
+                  <code className="text-sm block">npm run figma:update</code>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  The setup wizard will prompt you for your API endpoint and secret, then
-                  create <code>figma-plugin/ui.html</code> with your configuration. This file
-                  is gitignored to keep your secrets safe.
+                  Regenerates <code>ui.html</code> from your saved <code>.env.local</code> secrets—no prompts needed.
                 </p>
               </div>
 

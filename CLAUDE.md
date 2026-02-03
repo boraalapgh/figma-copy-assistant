@@ -9,7 +9,8 @@ npm run dev            # Run Next.js dev server
 npm run build          # Build Next.js for production
 npm run figma:build    # Build Figma plugin (figma-plugin/src/code.ts → figma-plugin/dist/code.js)
 npm run figma:watch    # Build Figma plugin with file watching
-npm run figma:setup    # Interactive setup wizard (creates ui.html from template)
+npm run figma:setup    # First-time setup: prompts for secrets, saves to .env.local, creates ui.html
+npm run figma:update   # Regenerates ui.html from .env.local (after template changes)
 ```
 
 No test framework is configured. Verify changes by loading the plugin in Figma Desktop.
@@ -40,25 +41,28 @@ Figma Plugin Sandbox  ←──postMessage──→  UI Frame  ──fetch + Bea
 ### Security
 
 - API requests require a Bearer token (`PLUGIN_API_SECRET` env var)
-- `figma-plugin/ui.html` is gitignored (contains secrets)
-- Users copy `ui.template.html` to `ui.html` and configure their secrets locally
+- `.env.local` stores local secrets (gitignored)
+- `figma-plugin/ui.html` is generated from template with secrets (gitignored)
+- `npm run figma:setup` reads from `.env.local` or prompts user
 
-### Three-Layer Prompt System
+### Four-Layer Prompt System
 
-1. **System prompt** (constant): Brand writing guidelines in `figma-plugin/src/code.ts`
-2. **Project context** (per-file): Stored in `figma.root.pluginData`, travels with the Figma file
-3. **User request** (per-generation): The immediate instruction from the user
+1. **System prompt** (constant): GoodHabitz UX writing guidelines in `figma-plugin/src/code.ts`
+2. **Element context** (auto-detected): Layer name, parent component, hierarchy path
+3. **Project context** (per-file): Stored in `figma.root.pluginData`, travels with the Figma file
+4. **User request** (per-generation): The immediate instruction from the user
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
+| `.env.example` | Template for local secrets |
+| `.env.local` | Local secrets (gitignored) |
 | `figma-plugin/manifest.json` | Figma plugin manifest |
-| `figma-plugin/ui.template.html` | UI template (copy to ui.html and configure) |
-| `figma-plugin/src/code.ts` | Plugin logic + system prompt |
+| `figma-plugin/ui.template.html` | UI template |
+| `figma-plugin/src/code.ts` | Plugin logic + GoodHabitz UX writing guidelines |
 | `app/api/generate/route.ts` | OpenAI API proxy |
-| `app/page.tsx` | Landing page |
-| `app/docs/page.tsx` | Documentation page |
+| `scripts/setup-plugin.mjs` | Setup wizard (reads .env.local, creates ui.html) |
 
 ## Plugin Development Notes
 
