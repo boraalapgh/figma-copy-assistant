@@ -9,6 +9,7 @@
   "editorType": ["figma"],
   "documentAccess": "dynamic-page",
   "networkAccess": {
-    "allowedDomains": ["*"]
+    "allowedDomains": ["*"],
+    "reasoning": "Connects to user-configured API endpoint for AI copy generation"
   }
 }
