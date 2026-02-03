@@ -45,12 +45,13 @@ Figma Plugin Sandbox  ←──postMessage──→  UI Frame  ──fetch + Bea
 - `figma-plugin/ui.html` is generated from template with secrets (gitignored)
 - `npm run figma:setup` reads from `.env.local` or prompts user
 
-### Four-Layer Prompt System
+### Five-Layer Prompt System
 
 1. **System prompt** (constant): GoodHabitz UX writing guidelines in `figma-plugin/src/code.ts`
-2. **Element context** (auto-detected): Layer name, parent component, hierarchy path
-3. **Project context** (per-file): Stored in `figma.root.pluginData`, travels with the Figma file
-4. **User request** (per-generation): The immediate instruction from the user
+2. **Project context** (per-file): Stored in `figma.root.pluginData`, travels with the Figma file
+3. **Audience** (per-generation): Learner or Admin toggle - applies different emotional tones
+4. **Element context** (auto-detected): Layer name, parent component, hierarchy path
+5. **User request** (per-generation): The immediate instruction from the user
 
 ### Key Files
 

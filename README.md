@@ -6,9 +6,10 @@ AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 
 ## Features
 
-- **Three-layer context**: System prompt (brand guidelines) + Project context (per-file) + User request
+- **Audience toggle**: Switch between Learner and Admin tones
+- **Element detection**: AI sees the component/layer context automatically
 - **Smart shortcuts**: Quick actions like "Make it concise", "Make it friendly"
-- **Shared context**: Project context travels with the Figma file
+- **Project context**: Per-file context travels with the Figma file
 - **Secure API**: OpenAI key and plugin secret stay on server, never exposed to client
 
 ## Architecture
@@ -82,12 +83,13 @@ PLUGIN_API_SECRET=your-secret-here
 
 1. **Set Project Context** (once per file)
    - Open plugin → Project Context tab
-   - Describe your project, audience, terminology
+   - Describe your project, terminology, specific notes
    - Click Save Context
 
 2. **Generate Copy**
    - Select a text layer in your design
    - Open the plugin
+   - **Select audience**: Learner or Admin (different tones)
    - Type your request or use a quick shortcut
    - Click Generate Copy
    - Apply or Copy the result

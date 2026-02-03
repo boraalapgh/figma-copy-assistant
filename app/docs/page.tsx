@@ -337,11 +337,26 @@ export default function DocsPage() {
               <h3 className="text-xl mb-4 font-serif">Generating Copy</h3>
               <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                 <li>Select a text layer in your Figma design</li>
-                <li>Open the plugin (it will show the current text)</li>
+                <li>Open the plugin (it will show the current text and element context)</li>
+                <li>Select the <strong>audience</strong>: Learner or Admin</li>
                 <li>Either type your request or use a quick shortcut</li>
                 <li>Click <strong>Generate Copy</strong></li>
                 <li>Review the suggestion and click <strong>Apply</strong> or <strong>Copy</strong></li>
               </ol>
+            </div>
+
+            <div>
+              <h3 className="text-xl mb-4 font-serif">Audience Tones</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                  <span className="font-medium text-sm block mb-2">Learner</span>
+                  <span className="text-xs text-muted-foreground">Motivating Mentor tone: warm, vibrant, honest, playful. Celebrates progress and encourages growth.</span>
+                </div>
+                <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                  <span className="font-medium text-sm block mb-2">Admin</span>
+                  <span className="text-xs text-muted-foreground">Trusted Partner tone: professional, caring, clear, confident. Guides with expertise and anticipates needs.</span>
+                </div>
+              </div>
             </div>
 
             <div>
