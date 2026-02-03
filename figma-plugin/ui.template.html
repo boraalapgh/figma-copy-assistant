@@ -219,7 +219,43 @@
     .section {
       margin-bottom: 16px;
     }
-    
+
+    .audience-toggle {
+      display: flex;
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .audience-option {
+      flex: 1;
+      padding: 8px 12px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+
+    .audience-option:hover {
+      color: #333;
+    }
+
+    .audience-option.active {
+      background: white;
+      color: #18a0fb;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .audience-label {
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
     /* API config removed - endpoint baked in */
   </style>
 </head>
@@ -246,6 +282,12 @@
       <div id="element-context-section" class="element-context" style="display: none;">
         <span class="element-context-label">Element:</span>
         <span id="element-context-text"></span>
+      </div>
+
+      <div class="audience-label">Writing for:</div>
+      <div class="audience-toggle">
+        <div class="audience-option active" data-audience="learner">Learner</div>
+        <div class="audience-option" data-audience="admin">Admin</div>
       </div>
 
       <div class="section">
@@ -313,7 +355,8 @@
       hasSelection: false,
       projectContext: '',
       generatedText: '',
-      elementContext: null
+      elementContext: null,
+      audience: 'learner'
     };
     
     // Elements
@@ -340,6 +383,15 @@
       });
     });
     
+    // Audience toggle
+    document.querySelectorAll('.audience-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.audience-option').forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        state.audience = option.dataset.audience;
+      });
+    });
+
     // Shortcuts
     document.querySelectorAll('.shortcut').forEach(shortcut => {
       shortcut.addEventListener('click', () => {
@@ -364,6 +416,7 @@
         pluginMessage: {
           type: 'generate',
           prompt,
+          audience: state.audience,
           apiEndpoint: API_ENDPOINT,
           apiSecret: API_SECRET
         }

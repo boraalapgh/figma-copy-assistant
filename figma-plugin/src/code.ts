@@ -227,6 +227,7 @@ figma.ui.onmessage = async (msg: {
   type: string;
   context?: string;
   prompt?: string;
+  audience?: string;
   apiEndpoint?: string;
   apiSecret?: string;
 }) => {
@@ -276,10 +277,16 @@ figma.ui.onmessage = async (msg: {
       elementInfo = parts.join(' | ');
     }
 
+    // Format audience for AI
+    const audienceInfo = msg.audience === 'admin'
+      ? 'Admin (use Trusted Partner tone: professional, caring, clear, confident)'
+      : 'Learner (use Motivating Mentor tone: warm, vibrant, honest, playful)';
+
     // Build the full prompt
     const fullPrompt = {
       systemPrompt: SYSTEM_PROMPT,
       projectContext: projectContext || 'No project context set.',
+      audience: audienceInfo,
       elementContext: elementInfo || 'No element context available.',
       currentText: selectedText || '',
       userRequest: msg.prompt
