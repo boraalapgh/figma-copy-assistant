@@ -139,6 +139,21 @@
       max-height: 60px;
       overflow-y: auto;
     }
+
+    .element-context {
+      background: #f0f4ff;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #5c6bc0;
+      border-left: 3px solid #5c6bc0;
+    }
+
+    .element-context-label {
+      font-weight: 600;
+      margin-right: 4px;
+    }
     
     .no-selection {
       text-align: center;
@@ -228,6 +243,11 @@
     </div>
     
     <div id="generate-form" style="display: none;">
+      <div id="element-context-section" class="element-context" style="display: none;">
+        <span class="element-context-label">Element:</span>
+        <span id="element-context-text"></span>
+      </div>
+
       <div class="section">
         <label>Current text:</label>
         <div class="current-text" id="current-text"></div>
@@ -292,7 +312,8 @@
       selectedText: null,
       hasSelection: false,
       projectContext: '',
-      generatedText: ''
+      generatedText: '',
+      elementContext: null
     };
     
     // Elements
@@ -379,13 +400,15 @@
         state.projectContext = msg.context || '';
         state.selectedText = msg.selectedText;
         state.hasSelection = msg.hasSelection;
+        state.elementContext = msg.elementContext || null;
         contextEl.value = state.projectContext;
         updateSelectionUI();
       }
-      
+
       else if (msg.type === 'selection-changed') {
         state.selectedText = msg.selectedText;
         state.hasSelection = msg.hasSelection;
+        state.elementContext = msg.elementContext || null;
         updateSelectionUI();
       }
       
@@ -405,13 +428,29 @@
     };
     
     function updateSelectionUI() {
+      const elementContextSection = document.getElementById('element-context-section');
+      const elementContextText = document.getElementById('element-context-text');
+
       if (state.hasSelection) {
         selectionInfo.style.display = 'none';
         generateForm.style.display = 'block';
         currentTextEl.textContent = state.selectedText || '(empty)';
+
+        // Display element context
+        if (state.elementContext) {
+          const ctx = state.elementContext;
+          const parts = [];
+          if (ctx.layerName) parts.push(ctx.layerName);
+          if (ctx.componentName) parts.push(`in ${ctx.componentName}`);
+          elementContextText.textContent = parts.join(' ') || 'Unknown element';
+          elementContextSection.style.display = 'block';
+        } else {
+          elementContextSection.style.display = 'none';
+        }
       } else {
         selectionInfo.style.display = 'block';
         generateForm.style.display = 'none';
+        elementContextSection.style.display = 'none';
       }
     }
     

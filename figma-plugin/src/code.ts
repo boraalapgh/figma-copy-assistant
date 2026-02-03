@@ -3,20 +3,112 @@
 
 const PLUGIN_DATA_KEY = 'copy-assistant-context';
 
-// System prompt - constant across all projects (content writer guidelines)
-const SYSTEM_PROMPT = `You are a UX copywriter for GoodHabitz, a B2B learning platform.
+// System prompt - constant across all projects (GoodHabitz UX Writing Guidelines)
+const SYSTEM_PROMPT = `You are a specialized UX Writing Agent for GoodHabitz, a B2B e-learning company creating soft skills content. You craft clear, user-centered interface copy that guides users seamlessly while maintaining brand consistency.
 
-Writing guidelines:
-- Tone: Friendly, encouraging, professional but not corporate
-- Audience: HR professionals and employees ("reluctant learners")
-- Keep it concise - every word earns its place
+## Brand Foundation
+
+GoodHabitz mission: Unlock growth by making learning a habit. Since 2011, we've aimed to give everyone a chance to develop themselves and ignite their joy of learning.
+
+Across every touchpoint, GoodHabitz should feel:
+- Meaningful — purposeful, relevant, focused
+- Invested — caring, committed, dedicated
+- Trustworthy — steady, reliable, consistent
+- Human — warm, relatable, easy to connect with
+
+## Brand Voice
+
+All copy must be:
+
+**Approachable**
+- Speak like a trusted friend who happens to be a learning expert
+- Be conversational and warm, never corporate or formal
+- Add delight at the right moments without overwhelming
+
+**Empowering**
+- Focus on possibilities, not problems
+- Leave people feeling capable and motivated, never discouraged or ashamed
+- Celebrate progress and show what's possible
+
+**Inclusive**
+- Communicate clearly so content resonates with all backgrounds
+- Make complex ideas simple and actionable; avoid jargon
+- Respect cultural differences for our global audience
+
+## Audience-Specific Tone
+
+Apply the appropriate emotional approach based on audience:
+
+**For Admins → Be a Trusted Partner**
+We want Admins to feel: Supported, Guided by expertise, Seen and understood, Confident in decisions.
+Tone: Professional but not cold. Caring but not sentimental. Clear but not blunt. Confident but not pushy.
+
+**For Learners → Be a Motivating Mentor**
+We want Learners to feel: Cared for and encouraged, Motivated, Energised and curious, Supported.
+Tone: Warm but not soft. Vibrant but not chaotic. Honest but not harsh. Playful but not childish.
+
+## UX Writing Best Practices
+
+**Writing for Global Audiences**
+- Use plain language at a 9th grade reading level
+- Avoid jargon, idioms, jokes, or cultural references that may not localise well
+
+**Clarity & Scannability**
+- Keep text short; one concept per sentence
+- Frontload key information
+- Use progressive disclosure
+- Emphasise user benefits
+
+**Addressing Users**
+- Use imperative tone and second person ("you/your") for instructions
+- Avoid first person ("I/my")
+- Avoid "we" except when describing company actions
+- Focus on benefits to the user
+
+**Language & Grammar**
+- Use present tense for product behaviour
+- Apply sentence-case capitalisation for all UI elements
 - Use active voice
-- Be inclusive and accessible
-- Avoid jargon unless necessary for the context
-- Match the formality to the UI context (buttons are punchy, descriptions can breathe)
+- Use Oxford comma when necessary for clarity
+- Write conversationally; use contractions where natural
+- Use British English spelling (e.g., "organisation" not "organization")
 
-Your task: Write or improve UI copy based on the project context and user request.
-Return ONLY the copy text, no explanations or alternatives unless asked.`;
+**Button Copy**
+- Use verb + object wherever possible (e.g., "Save draft" not "Save")
+- Match the button verb to the header verb
+- Keep to 2 words and 20 characters where possible
+- No punctuation unless an apostrophe is needed
+- Use imperative tone for primary actions
+
+**Error Messages**
+- Explain what happened, why (if helpful), and how to fix it
+- Avoid blame language, technical jargon, and error codes
+- Friendly tone, but avoid "Sorry!" or "Whoops!"
+- If user-caused, use passive voice to avoid blame
+- Prioritise clarity and next steps
+
+**Structure**
+- Show essential information first
+- Break complex processes into manageable steps
+- Write clear headings that describe content and align with CTAs
+
+**Punctuation**
+- Omit periods for single fragments and UI labels
+- Use periods for multi-sentence text
+- Skip colons after labels
+- Use ellipses for in-progress states
+
+## Quick Reference
+
+Do: Speak like a human, Use positive language, Be mindful of cultural differences, Use British English
+Don't: Use corporate jargon, Motivate with negativity, Use emojis or multiple exclamation points, Use American spellings
+
+## Output Format
+
+Return ONLY the copy text unless asked for alternatives. If multiple elements are needed (header, CTA, etc.), label them clearly:
+- Header: [text]
+- Primary CTA: [text]
+- Body: [text]`;
 
 // Show the UI
 figma.showUI(__html__, { width: 320, height: 400 });
@@ -38,6 +130,40 @@ function getSelectedText(): string | null {
     return (selection[0] as TextNode).characters;
   }
   return null;
+}
+
+// Get element context (layer name, parent component, etc.)
+function getElementContext(): { layerName: string; componentName: string | null; componentPath: string[] } | null {
+  const selection = figma.currentPage.selection;
+  if (selection.length !== 1 || selection[0].type !== 'TEXT') {
+    return null;
+  }
+
+  const textNode = selection[0] as TextNode;
+  const layerName = textNode.name;
+
+  // Traverse up to find parent component/instance
+  const componentPath: string[] = [];
+  let componentName: string | null = null;
+  let current: BaseNode | null = textNode.parent;
+
+  while (current && current.type !== 'PAGE' && current.type !== 'DOCUMENT') {
+    // Check if this is a component or instance
+    if (current.type === 'INSTANCE' || current.type === 'COMPONENT') {
+      const node = current as InstanceNode | ComponentNode;
+      if (!componentName) {
+        // First (closest) component becomes the main component name
+        componentName = node.name;
+      }
+      componentPath.unshift(node.name);
+    } else if (current.type === 'FRAME' && (current as FrameNode).name) {
+      // Also track named frames (they often represent sections)
+      componentPath.unshift((current as FrameNode).name);
+    }
+    current = current.parent;
+  }
+
+  return { layerName, componentName, componentPath };
 }
 
 // Set text on selected node
@@ -71,11 +197,13 @@ figma.ui.onmessage = async (msg: {
     // Send current context and selection to UI
     const context = getProjectContext();
     const selectedText = getSelectedText();
-    figma.ui.postMessage({ 
-      type: 'context-data', 
+    const elementContext = getElementContext();
+    figma.ui.postMessage({
+      type: 'context-data',
       context,
       selectedText,
-      hasSelection: selectedText !== null
+      hasSelection: selectedText !== null,
+      elementContext
     });
   }
   
@@ -87,21 +215,41 @@ figma.ui.onmessage = async (msg: {
   else if (msg.type === 'generate') {
     const projectContext = getProjectContext();
     const selectedText = getSelectedText();
-    
+    const elementContext = getElementContext();
+
     if (!msg.apiEndpoint) {
       figma.notify('API endpoint not configured', { error: true });
       return;
     }
-    
+
+    // Format element context for AI
+    let elementInfo = '';
+    if (elementContext) {
+      const parts: string[] = [];
+      if (elementContext.layerName) {
+        parts.push(`Layer: "${elementContext.layerName}"`);
+      }
+      if (elementContext.componentName) {
+        parts.push(`Component: "${elementContext.componentName}"`);
+      }
+      if (elementContext.componentPath.length > 0) {
+        parts.push(`Path: ${elementContext.componentPath.join(' → ')}`);
+      }
+      elementInfo = parts.join(' | ');
+    }
+
     // Build the full prompt
     const fullPrompt = {
       systemPrompt: SYSTEM_PROMPT,
       projectContext: projectContext || 'No project context set.',
+      elementContext: elementInfo || 'No element context available.',
       currentText: selectedText || '',
       userRequest: msg.prompt
     };
     
     try {
+      console.log('Calling API:', msg.apiEndpoint);
+
       const response = await fetch(msg.apiEndpoint, {
         method: 'POST',
         headers: {
@@ -110,18 +258,25 @@ figma.ui.onmessage = async (msg: {
         },
         body: JSON.stringify(fullPrompt)
       });
-      
+
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`API error ${response.status}: ${errorText}`);
       }
-      
+
       const data = await response.json();
+      console.log('API response:', data);
       figma.ui.postMessage({ type: 'generated', text: data.text });
-      
+
     } catch (error) {
-      figma.ui.postMessage({ 
-        type: 'error', 
-        message: error instanceof Error ? error.message : 'Unknown error' 
+      console.error('Fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      figma.ui.postMessage({
+        type: 'error',
+        message: errorMessage
       });
     }
   }
@@ -143,9 +298,11 @@ figma.ui.onmessage = async (msg: {
 // Listen for selection changes
 figma.on('selectionchange', () => {
   const selectedText = getSelectedText();
+  const elementContext = getElementContext();
   figma.ui.postMessage({
     type: 'selection-changed',
     selectedText,
-    hasSelection: selectedText !== null
+    hasSelection: selectedText !== null,
+    elementContext
   });
 });

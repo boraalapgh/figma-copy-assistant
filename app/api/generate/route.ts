@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 interface RequestBody {
   systemPrompt: string;
   projectContext: string;
+  elementContext?: string;
   currentText: string;
   userRequest: string;
 }
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     const body: RequestBody = await request.json();
-    const { systemPrompt, projectContext, currentText, userRequest } = body;
+    const { systemPrompt, projectContext, elementContext, currentText, userRequest } = body;
 
     if (!userRequest) {
       return NextResponse.json(
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
     const userMessage = `
 PROJECT CONTEXT:
 ${projectContext || 'No project context provided.'}
+
+UI ELEMENT:
+${elementContext || 'No element context available.'}
 
 CURRENT TEXT (if any):
 ${currentText || '(No existing text)'}
