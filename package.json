@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "figma:build": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es6",
-    "figma:watch": "esbuild src/code.ts --bundle --outfile=dist/code.js --target=es6 --watch"
+    "figma:build": "esbuild figma-plugin/src/code.ts --bundle --outfile=figma-plugin/dist/code.js --target=es6",
+    "figma:watch": "esbuild figma-plugin/src/code.ts --bundle --outfile=figma-plugin/dist/code.js --target=es6 --watch"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

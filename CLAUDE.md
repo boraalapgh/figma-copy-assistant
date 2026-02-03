@@ -5,9 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build Commands
 
 ```bash
-npm run build      # Build plugin code (src/code.ts → dist/code.js)
-npm run watch      # Build with file watching
-npm run dev        # Build plugin and UI
+npm run dev            # Run Next.js dev server
+npm run build          # Build Next.js for production
+npm run figma:build    # Build Figma plugin (figma-plugin/src/code.ts → figma-plugin/dist/code.js)
+npm run figma:watch    # Build Figma plugin with file watching
 ```
 
 No test framework is configured. Verify changes by loading the plugin in Figma Desktop.
@@ -15,39 +16,53 @@ No test framework is configured. Verify changes by loading the plugin in Figma D
 ## Deploy Commands
 
 ```bash
-vercel                          # Deploy API to Vercel
-vercel env add OPENAI_API_KEY   # Set OpenAI key in Vercel environment
+vercel --prod                       # Deploy to Vercel
+vercel env add OPENAI_API_KEY       # Set OpenAI key
+vercel env add PLUGIN_API_SECRET    # Set plugin API secret (for security)
 ```
 
 ## Architecture
 
-This is a **Figma plugin** with a **Vercel Edge Function** backend that proxies OpenAI API calls.
+This is a **Figma plugin** with a **Next.js API** backend that proxies OpenAI API calls.
 
 ### Communication Flow
 
 ```
-Figma Plugin Sandbox (code.ts)  ←──postMessage──→  UI Frame (ui.html)  ──fetch──→  Vercel Edge (api/generate.ts)  ──→  OpenAI
+Figma Plugin Sandbox  ←──postMessage──→  UI Frame  ──fetch + Bearer token──→  Next.js API  ──→  OpenAI
+(figma-plugin/src/code.ts)              (figma-plugin/ui.html)              (app/api/generate/route.ts)
 ```
 
-- **Plugin sandbox** (`src/code.ts`): Runs in Figma's sandbox with access to the Figma API but limited network. Handles text selection, font loading, and plugin data storage.
-- **UI frame** (`ui.html`): Embedded iframe with full network access but no Figma API. Contains all HTML/CSS/JS in a single file.
-- **Edge function** (`api/generate.ts`): Vercel Edge Function that keeps the OpenAI API key secure. Receives the three-layer prompt structure and returns generated copy.
+- **Plugin sandbox** (`figma-plugin/src/code.ts`): Runs in Figma's sandbox. Handles text selection, font loading, and plugin data storage.
+- **UI frame** (`figma-plugin/ui.html`): Embedded iframe with network access. Contains HTML/CSS/JS. Created from `ui.template.html`.
+- **API route** (`app/api/generate/route.ts`): Next.js API that verifies the plugin secret and proxies to OpenAI.
+
+### Security
+
+- API requests require a Bearer token (`PLUGIN_API_SECRET` env var)
+- `figma-plugin/ui.html` is gitignored (contains secrets)
+- Users copy `ui.template.html` to `ui.html` and configure their secrets locally
 
 ### Three-Layer Prompt System
 
-1. **System prompt** (constant): GoodHabitz writing guidelines, baked into `src/code.ts`
+1. **System prompt** (constant): Brand writing guidelines in `figma-plugin/src/code.ts`
 2. **Project context** (per-file): Stored in `figma.root.pluginData`, travels with the Figma file
 3. **User request** (per-generation): The immediate instruction from the user
 
-### Key Integration Points
+### Key Files
 
-- **API endpoint**: Hardcoded in `ui.html` line 286 as `API_ENDPOINT`
-- **System prompt**: Defined in `src/code.ts` lines 7-19 as `SYSTEM_PROMPT`
-- **Plugin data key**: `copy-assistant-context` used for persistent storage
+| File | Purpose |
+|------|---------|
+| `figma-plugin/manifest.json` | Figma plugin manifest |
+| `figma-plugin/ui.template.html` | UI template (copy to ui.html and configure) |
+| `figma-plugin/src/code.ts` | Plugin logic + system prompt |
+| `app/api/generate/route.ts` | OpenAI API proxy |
+| `app/page.tsx` | Landing page |
+| `app/docs/page.tsx` | Documentation page |
 
 ## Plugin Development Notes
 
-- The `manifest.json` points to `dist/code.js` - always run build before testing
-- UI-to-plugin messages use `parent.postMessage({ pluginMessage: {...} }, '*')`
-- Plugin-to-UI messages use `figma.ui.postMessage({...})`
-- Font loading is required before modifying text content (see `setSelectedText` function)
+- Run `npm run figma:build` before testing in Figma
+- Copy `ui.template.html` to `ui.html` and set `API_ENDPOINT` and `API_SECRET`
+- The manifest points to `figma-plugin/dist/code.js`
+- UI-to-plugin: `parent.postMessage({ pluginMessage: {...} }, '*')`
+- Plugin-to-UI: `figma.ui.postMessage({...})`

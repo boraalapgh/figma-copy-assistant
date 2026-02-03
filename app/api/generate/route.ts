@@ -10,6 +10,18 @@ interface RequestBody {
 
 export async function POST(request: Request) {
   try {
+    // Verify API secret
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    const expectedSecret = process.env.PLUGIN_API_SECRET;
+
+    if (expectedSecret && token !== expectedSecret) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body: RequestBody = await request.json();
     const { systemPrompt, projectContext, currentText, userRequest } = body;
 
@@ -63,7 +75,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     },
   });
 }

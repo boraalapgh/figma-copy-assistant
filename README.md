@@ -9,7 +9,7 @@ AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 - **Three-layer context**: System prompt (brand guidelines) + Project context (per-file) + User request
 - **Smart shortcuts**: Quick actions like "Make it concise", "Make it friendly"
 - **Shared context**: Project context travels with the Figma file
-- **Secure API**: OpenAI key stays on server, never exposed to client
+- **Secure API**: OpenAI key and plugin secret stay on server, never exposed to client
 
 ## Architecture
 
@@ -18,11 +18,11 @@ AI-powered UX copywriting assistant for Figma. Built for GoodHabitz design team.
 │  Figma Plugin   │────▶│   Next.js API    │────▶│   OpenAI    │
 │  (UI + Logic)   │◀────│   (Vercel)       │◀────│   GPT-4     │
 └─────────────────┘     └──────────────────┘     └─────────────┘
-        │
-        ▼
-┌─────────────────┐
-│  Project Context│
-│  (Plugin Data)  │
+        │                    ▲
+        ▼                    │ Bearer token
+┌─────────────────┐          │ (PLUGIN_API_SECRET)
+│  Project Context│          │
+│  (Plugin Data)  │──────────┘
 └─────────────────┘
 ```
 
@@ -41,31 +41,35 @@ npm install
 # Deploy to Vercel
 vercel
 
-# Add your OpenAI API key
-vercel env add OPENAI_API_KEY
+# Add environment variables
+vercel env add OPENAI_API_KEY        # Your OpenAI API key
+vercel env add PLUGIN_API_SECRET     # A secret string (make one up)
 
 # Deploy to production
 vercel --prod
 ```
 
-### 2. Install the Figma Plugin
+### 2. Set Up the Figma Plugin
 
 ```bash
 # Build the plugin
 npm run figma:build
+
+# Create your local config (not committed to git)
+cp figma-plugin/ui.template.html figma-plugin/ui.html
 ```
 
-Then in Figma Desktop:
-1. Go to **Plugins → Development → Import plugin from manifest**
-2. Select the `manifest.json` from this repo
-
-### 3. Update API Endpoint (if needed)
-
-The API endpoint is configured in `ui.html` at line 286. Update it to match your Vercel deployment:
-
+Edit `figma-plugin/ui.html` and update the configuration:
 ```javascript
 const API_ENDPOINT = 'https://your-project.vercel.app/api/generate';
+const API_SECRET = 'your-secret-here';  // Same as PLUGIN_API_SECRET
 ```
+
+### 3. Import into Figma
+
+1. Open Figma Desktop
+2. Go to **Plugins → Development → Import plugin from manifest**
+3. Select `figma-plugin/manifest.json`
 
 ## Usage
 
@@ -103,13 +107,13 @@ npm run build
 ## Customization
 
 ### System Prompt
-Edit the brand writing guidelines in `src/code.ts`:
+Edit the brand writing guidelines in `figma-plugin/src/code.ts`:
 ```javascript
 const SYSTEM_PROMPT = `Your brand guidelines here...`;
 ```
 
 ### Quick Shortcuts
-Add custom shortcuts in `ui.html`:
+Add custom shortcuts in `figma-plugin/ui.template.html`:
 ```html
 <span class="shortcut" data-prompt="Your custom prompt">🎯 Label</span>
 ```
@@ -123,18 +127,26 @@ model: 'gpt-4o-mini'  // or 'gpt-4o', etc.
 ## File Structure
 
 ```
-├── manifest.json          # Figma plugin manifest
-├── ui.html                # Plugin UI (HTML/CSS/JS)
-├── src/
-│   └── code.ts            # Plugin logic (Figma API)
+├── figma-plugin/
+│   ├── manifest.json          # Figma plugin manifest
+│   ├── ui.template.html       # UI template (copy to ui.html)
+│   ├── ui.html                # Your local config (gitignored)
+│   └── src/
+│       └── code.ts            # Plugin logic (Figma API)
 ├── app/
-│   ├── page.tsx           # Landing page
-│   ├── docs/page.tsx      # Documentation
+│   ├── page.tsx               # Landing page
+│   ├── docs/page.tsx          # Documentation
 │   └── api/generate/
-│       └── route.ts       # OpenAI API proxy
-├── components/ui/         # shadcn/ui components
+│       └── route.ts           # OpenAI API proxy
+├── components/ui/             # shadcn/ui components
 └── package.json
 ```
+
+## Security
+
+- `OPENAI_API_KEY` - Stored in Vercel, never exposed
+- `PLUGIN_API_SECRET` - Required for all API requests, prevents unauthorized usage
+- `figma-plugin/ui.html` - Gitignored, contains your local secrets
 
 ## License
 

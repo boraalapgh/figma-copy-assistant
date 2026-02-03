@@ -1,7 +1,11 @@
 node_modules/
-dist/
 .next/
 .vercel
 .env
 .env.local
 *.log
+.env*.local
+
+# Figma plugin (contains secrets - use ui.template.html)
+figma-plugin/ui.html
+figma-plugin/dist/

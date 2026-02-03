@@ -281,10 +281,13 @@
   <!-- Settings removed - API endpoint baked in -->
 
   <script>
-    // State
-    // API endpoint - baked in after Vercel deployment
-    const API_ENDPOINT = 'https://figma-copy-assistant.vercel.app/api/generate';
-    
+    // ============================================
+    // CONFIGURATION - Update these values!
+    // ============================================
+    const API_ENDPOINT = 'YOUR_VERCEL_URL/api/generate';  // e.g., 'https://your-project.vercel.app/api/generate'
+    const API_SECRET = 'YOUR_API_SECRET';  // Must match PLUGIN_API_SECRET env var in Vercel
+    // ============================================
+
     let state = {
       selectedText: null,
       hasSelection: false,
@@ -336,12 +339,13 @@
       loadingEl.style.display = 'block';
       generateBtn.disabled = true;
       
-      parent.postMessage({ 
-        pluginMessage: { 
-          type: 'generate', 
+      parent.postMessage({
+        pluginMessage: {
+          type: 'generate',
           prompt,
-          apiEndpoint: API_ENDPOINT
-        } 
+          apiEndpoint: API_ENDPOINT,
+          apiSecret: API_SECRET
+        }
       }, '*');
     });
     

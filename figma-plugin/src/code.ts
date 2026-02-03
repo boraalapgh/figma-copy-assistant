@@ -59,11 +59,12 @@ async function setSelectedText(text: string): Promise<boolean> {
 }
 
 // Handle messages from UI
-figma.ui.onmessage = async (msg: { 
-  type: string; 
-  context?: string; 
+figma.ui.onmessage = async (msg: {
+  type: string;
+  context?: string;
   prompt?: string;
   apiEndpoint?: string;
+  apiSecret?: string;
 }) => {
   
   if (msg.type === 'get-context') {
@@ -103,7 +104,10 @@ figma.ui.onmessage = async (msg: {
     try {
       const response = await fetch(msg.apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${msg.apiSecret || ''}`
+        },
         body: JSON.stringify(fullPrompt)
       });
       

@@ -45,6 +45,7 @@ export default function DocsPage() {
             <a href="#architecture" className="block text-muted-foreground hover:text-foreground transition-colors">Architecture</a>
             <a href="#installation" className="block text-muted-foreground hover:text-foreground transition-colors">Installation</a>
             <a href="#configuration" className="block text-muted-foreground hover:text-foreground transition-colors">Configuration</a>
+            <a href="#security" className="block text-muted-foreground hover:text-foreground transition-colors">Security</a>
             <a href="#usage" className="block text-muted-foreground hover:text-foreground transition-colors">Usage Guide</a>
             <a href="#customization" className="block text-muted-foreground hover:text-foreground transition-colors">Customization</a>
             <a href="#api-reference" className="block text-muted-foreground hover:text-foreground transition-colors">API Reference</a>
@@ -63,12 +64,12 @@ export default function DocsPage() {
             <pre className="text-sm">
 {`┌─────────────────────┐     ┌──────────────────────┐     ┌─────────────┐
 │   Figma Plugin      │────▶│   Next.js API        │────▶│   OpenAI    │
-│   (UI + Logic)      │◀────│   (Vercel Edge)      │◀────│   GPT-4     │
+│   (figma-plugin/)   │◀────│   (Vercel)           │◀────│   GPT-4     │
 └─────────────────────┘     └──────────────────────┘     └─────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   Project Context   │
+         │                           ▲
+         ▼                           │ Bearer token
+┌─────────────────────┐              │ (PLUGIN_API_SECRET)
+│   Project Context   │──────────────┘
 │   (Plugin Data)     │
 └─────────────────────┘`}
             </pre>
@@ -77,23 +78,24 @@ export default function DocsPage() {
           <h3 className="text-xl mb-4 font-serif">Components</h3>
           <div className="space-y-6">
             <div>
-              <h4 className="font-medium mb-2">Figma Plugin</h4>
+              <h4 className="font-medium mb-2">Figma Plugin (<code>figma-plugin/</code>)</h4>
               <p className="text-sm text-muted-foreground">
                 Runs inside Figma&apos;s sandbox environment. Handles text selection, font loading,
                 and stores project context in the Figma file&apos;s plugin data.
               </p>
             </div>
             <div>
-              <h4 className="font-medium mb-2">Next.js API</h4>
+              <h4 className="font-medium mb-2">Next.js API (<code>app/api/generate/</code>)</h4>
               <p className="text-sm text-muted-foreground">
-                Deployed on Vercel, this API route receives requests from the plugin and
-                forwards them to OpenAI. The API key is stored securely as an environment variable.
+                Deployed on Vercel, this API route receives requests from the plugin, verifies the
+                API secret, and forwards them to OpenAI. Both the OpenAI key and plugin secret are
+                stored securely as environment variables.
               </p>
             </div>
             <div>
               <h4 className="font-medium mb-2">Three-Layer Prompt System</h4>
               <p className="text-sm text-muted-foreground">
-                <strong>System prompt:</strong> Brand voice guidelines (constant, defined in code)<br />
+                <strong>System prompt:</strong> Brand voice guidelines (constant, in <code>figma-plugin/src/code.ts</code>)<br />
                 <strong>Project context:</strong> Per-file context stored in Figma plugin data<br />
                 <strong>User request:</strong> The immediate instruction from the designer
               </p>
@@ -108,7 +110,8 @@ export default function DocsPage() {
           <Tabs defaultValue="api" className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="api">1. Deploy API</TabsTrigger>
-              <TabsTrigger value="plugin">2. Install Plugin</TabsTrigger>
+              <TabsTrigger value="plugin">2. Setup Plugin</TabsTrigger>
+              <TabsTrigger value="figma">3. Import to Figma</TabsTrigger>
             </TabsList>
 
             <TabsContent value="api" className="space-y-6">
@@ -117,29 +120,30 @@ export default function DocsPage() {
               </p>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Clone the repository</h4>
-                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">git clone https://github.com/boraalapgh/figma-copy-assistant.git</code>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-medium">Install dependencies and deploy</h4>
+                <h4 className="font-medium">Clone and install</h4>
                 <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 space-y-2">
+                  <code className="text-sm block">git clone https://github.com/boraalapgh/figma-copy-assistant.git</code>
                   <code className="text-sm block">cd figma-copy-assistant</code>
                   <code className="text-sm block">npm install</code>
-                  <code className="text-sm block">vercel</code>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Set your OpenAI API key</h4>
+                <h4 className="font-medium">Deploy to Vercel</h4>
                 <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">vercel env add OPENAI_API_KEY</code>
+                  <code className="text-sm">vercel</code>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Set environment variables</h4>
+                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 space-y-2">
+                  <code className="text-sm block">vercel env add OPENAI_API_KEY</code>
+                  <code className="text-sm block">vercel env add PLUGIN_API_SECRET</code>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  You&apos;ll be prompted to enter your OpenAI API key. This is stored securely
-                  in Vercel and never exposed to the client.
+                  For <code>PLUGIN_API_SECRET</code>, create a secure random string. You&apos;ll use this same
+                  value when configuring the plugin.
                 </p>
               </div>
 
@@ -150,14 +154,13 @@ export default function DocsPage() {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Note your deployment URL (e.g., <code>https://your-project.vercel.app</code>).
-                  You&apos;ll need this for the plugin configuration.
                 </p>
               </div>
             </TabsContent>
 
             <TabsContent value="plugin" className="space-y-6">
               <p className="text-muted-foreground">
-                Install the Figma plugin for local development.
+                Set up the Figma plugin with your API configuration.
               </p>
 
               <div className="space-y-4">
@@ -168,23 +171,49 @@ export default function DocsPage() {
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Import into Figma</h4>
+                <h4 className="font-medium">Create your local configuration</h4>
+                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
+                  <code className="text-sm">cp figma-plugin/ui.template.html figma-plugin/ui.html</code>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  This creates your local config file which is gitignored (won&apos;t be committed).
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Configure your secrets</h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Edit <code>figma-plugin/ui.html</code> and update the configuration section at the top:
+                </p>
+                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto">
+                  <pre className="text-sm">
+{`const API_ENDPOINT = 'https://your-project.vercel.app/api/generate';
+const API_SECRET = 'your-secret-here';  // Same as PLUGIN_API_SECRET`}
+                  </pre>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="figma" className="space-y-6">
+              <p className="text-muted-foreground">
+                Import the plugin into Figma Desktop.
+              </p>
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Import the plugin</h4>
                 <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
                   <li>Open Figma Desktop</li>
                   <li>Go to <strong>Plugins → Development → Import plugin from manifest</strong></li>
-                  <li>Select the <code>manifest.json</code> file from the repository</li>
+                  <li>Navigate to your repo and select <code>figma-plugin/manifest.json</code></li>
                 </ol>
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Configure the API endpoint</h4>
-                <p className="text-sm text-muted-foreground">
-                  The API endpoint is configured in <code>ui.html</code> at line 286.
-                  Update <code>API_ENDPOINT</code> to match your Vercel deployment URL:
-                </p>
-                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">const API_ENDPOINT = &apos;https://your-project.vercel.app/api/generate&apos;;</code>
-                </div>
+                <h4 className="font-medium">Run the plugin</h4>
+                <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+                  <li>Open any Figma file</li>
+                  <li>Go to <strong>Plugins → Development → Copy Assistant</strong></li>
+                </ol>
               </div>
             </TabsContent>
           </Tabs>
@@ -196,7 +225,7 @@ export default function DocsPage() {
 
           <div className="space-y-8">
             <div>
-              <h3 className="text-xl mb-4 font-serif">Environment Variables</h3>
+              <h3 className="text-xl mb-4 font-serif">Environment Variables (Vercel)</h3>
               <div className="border border-border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/50">
@@ -212,28 +241,73 @@ export default function DocsPage() {
                       <td className="p-4 text-muted-foreground">Your OpenAI API key</td>
                       <td className="p-4">Yes</td>
                     </tr>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>PLUGIN_API_SECRET</code></td>
+                      <td className="p-4 text-muted-foreground">Secret token for plugin authentication</td>
+                      <td className="p-4">Yes</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
             </div>
 
             <div>
-              <h3 className="text-xl mb-4 font-serif">System Prompt</h3>
-              <p className="text-muted-foreground mb-4">
-                The system prompt defines your brand&apos;s writing guidelines. Edit it in <code>src/code.ts</code>:
-              </p>
-              <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto">
-                <pre className="text-sm">
-{`const SYSTEM_PROMPT = \`You are a UX copywriter for GoodHabitz...
+              <h3 className="text-xl mb-4 font-serif">Plugin Configuration (<code>figma-plugin/ui.html</code>)</h3>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-4 font-medium">Variable</th>
+                      <th className="text-left p-4 font-medium">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>API_ENDPOINT</code></td>
+                      <td className="p-4 text-muted-foreground">Your Vercel deployment URL + <code>/api/generate</code></td>
+                    </tr>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>API_SECRET</code></td>
+                      <td className="p-4 text-muted-foreground">Must match <code>PLUGIN_API_SECRET</code> in Vercel</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
 
-Writing guidelines:
-- Tone: Friendly, encouraging, professional but not corporate
-- Audience: HR professionals and employees
-- Keep it concise - every word earns its place
-- Use active voice
-- Be inclusive and accessible
-...\`;`}
-                </pre>
+        {/* Security Section */}
+        <section id="security" className="mb-20 scroll-mt-24">
+          <h2 className="text-3xl mb-6">Security</h2>
+
+          <div className="space-y-6">
+            <p className="text-muted-foreground">
+              Copy Assistant is designed with security in mind. Here&apos;s how your credentials are protected:
+            </p>
+
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                <h4 className="font-medium mb-2">OpenAI API Key</h4>
+                <p className="text-sm text-muted-foreground">
+                  Stored only in Vercel environment variables. Never sent to or visible from the client.
+                </p>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                <h4 className="font-medium mb-2">Plugin API Secret</h4>
+                <p className="text-sm text-muted-foreground">
+                  Required for all API requests. Prevents unauthorized users from using your API endpoint
+                  even if they know the URL.
+                </p>
+              </div>
+
+              <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                <h4 className="font-medium mb-2">Local Configuration</h4>
+                <p className="text-sm text-muted-foreground">
+                  <code>figma-plugin/ui.html</code> is gitignored. Your secrets stay on your machine and
+                  are never committed to the repository.
+                </p>
               </div>
             </div>
           </div>
@@ -302,14 +376,14 @@ Writing guidelines:
                 The system prompt is the foundation of all AI responses. Customize it to match your team&apos;s voice:
               </p>
               <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                <code className="text-sm">src/code.ts → SYSTEM_PROMPT constant</code>
+                <code className="text-sm">figma-plugin/src/code.ts → SYSTEM_PROMPT constant</code>
               </div>
             </div>
 
             <div>
               <h3 className="text-xl mb-4 font-serif">Adding Custom Shortcuts</h3>
               <p className="text-muted-foreground mb-4">
-                Add new quick shortcuts by editing the shortcuts section in <code>ui.html</code>:
+                Add new quick shortcuts by editing the shortcuts section in <code>figma-plugin/ui.template.html</code>:
               </p>
               <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto">
                 <pre className="text-sm">
@@ -318,6 +392,9 @@ Writing guidelines:
 </span>`}
                 </pre>
               </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Remember to copy the updated template to <code>ui.html</code> after making changes.
+              </p>
             </div>
 
             <div>
@@ -343,6 +420,14 @@ Writing guidelines:
                 Generates copy based on the provided context and user request.
               </p>
 
+              <h4 className="font-medium mb-2">Headers</h4>
+              <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto mb-4">
+                <pre className="text-sm">
+{`Authorization: Bearer <PLUGIN_API_SECRET>
+Content-Type: application/json`}
+                </pre>
+              </div>
+
               <h4 className="font-medium mb-2">Request Body</h4>
               <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto mb-4">
                 <pre className="text-sm">
@@ -362,6 +447,32 @@ Writing guidelines:
   "text": "string"  // Generated copy
 }`}
                 </pre>
+              </div>
+
+              <h4 className="font-medium mb-2 mt-4">Error Responses</h4>
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="text-left p-4 font-medium">Status</th>
+                      <th className="text-left p-4 font-medium">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>401</code></td>
+                      <td className="p-4 text-muted-foreground">Invalid or missing API secret</td>
+                    </tr>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>400</code></td>
+                      <td className="p-4 text-muted-foreground">Missing user request</td>
+                    </tr>
+                    <tr className="border-t border-border">
+                      <td className="p-4"><code>500</code></td>
+                      <td className="p-4 text-muted-foreground">OpenAI API error</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
