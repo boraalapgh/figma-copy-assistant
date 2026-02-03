@@ -39,14 +39,32 @@ async function main() {
   // Get values from user
   const defaultEndpoint = 'https://figma-copy-assistant.vercel.app/api/generate';
 
-  console.log(`Default endpoint: ${defaultEndpoint}`);
-  const endpoint = await ask('API Endpoint (press Enter for default): ') || defaultEndpoint;
-  const secret = await ask('API Secret (PLUGIN_API_SECRET value): ');
+  console.log(`Default endpoint: ${defaultEndpoint}\n`);
+
+  let endpoint = await ask('API Endpoint (press Enter for default): ');
+  endpoint = endpoint.trim() || defaultEndpoint;
+
+  console.log(''); // blank line
+  let secret = await ask('API Secret (PLUGIN_API_SECRET value): ');
+  secret = secret.trim();
 
   if (!secret) {
     console.log('\n❌ API Secret is required.\n');
     rl.close();
     process.exit(1);
+  }
+
+  // Confirm values
+  console.log('\n─────────────────────────────────────');
+  console.log(`Endpoint: ${endpoint}`);
+  console.log(`Secret:   ${secret.slice(0, 8)}${'*'.repeat(Math.max(0, secret.length - 8))}`);
+  console.log('─────────────────────────────────────\n');
+
+  const confirm = await ask('Create ui.html with these values? (Y/n): ');
+  if (confirm.toLowerCase() === 'n') {
+    console.log('Setup cancelled. Run again to retry.\n');
+    rl.close();
+    process.exit(0);
   }
 
   // Read template and replace placeholders
