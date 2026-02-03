@@ -9,6 +9,7 @@ npm run dev            # Run Next.js dev server
 npm run build          # Build Next.js for production
 npm run figma:build    # Build Figma plugin (figma-plugin/src/code.ts → figma-plugin/dist/code.js)
 npm run figma:watch    # Build Figma plugin with file watching
+npm run figma:setup    # Interactive setup wizard (creates ui.html from template)
 ```
 
 No test framework is configured. Verify changes by loading the plugin in Figma Desktop.
@@ -62,7 +63,7 @@ Figma Plugin Sandbox  ←──postMessage──→  UI Frame  ──fetch + Bea
 ## Plugin Development Notes
 
 - Run `npm run figma:build` before testing in Figma
-- Copy `ui.template.html` to `ui.html` and set `API_ENDPOINT` and `API_SECRET`
+- Run `npm run figma:setup` to create `ui.html` with your API endpoint and secret
 - The manifest points to `figma-plugin/dist/code.js`
 - UI-to-plugin: `parent.postMessage({ pluginMessage: {...} }, '*')`
 - Plugin-to-UI: `figma.ui.postMessage({...})`

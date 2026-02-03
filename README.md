@@ -55,15 +55,15 @@ vercel --prod
 # Build the plugin
 npm run figma:build
 
-# Create your local config (not committed to git)
-cp figma-plugin/ui.template.html figma-plugin/ui.html
+# Run the setup wizard (creates ui.html with your config)
+npm run figma:setup
 ```
 
-Edit `figma-plugin/ui.html` and update the configuration:
-```javascript
-const API_ENDPOINT = 'https://your-project.vercel.app/api/generate';
-const API_SECRET = 'your-secret-here';  // Same as PLUGIN_API_SECRET
-```
+The setup wizard will prompt you for:
+- **API Endpoint** - Your Vercel deployment URL (default provided)
+- **API Secret** - The same `PLUGIN_API_SECRET` you set in Vercel
+
+This creates `figma-plugin/ui.html` which is gitignored to keep your secrets safe.
 
 ### 3. Import into Figma
 

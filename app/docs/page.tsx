@@ -171,26 +171,23 @@ export default function DocsPage() {
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Create your local configuration</h4>
+                <h4 className="font-medium">Run the setup wizard</h4>
                 <div className="bg-foreground/5 p-4 rounded-lg border border-border/50">
-                  <code className="text-sm">cp figma-plugin/ui.template.html figma-plugin/ui.html</code>
+                  <code className="text-sm">npm run figma:setup</code>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  This creates your local config file which is gitignored (won&apos;t be committed).
+                  The setup wizard will prompt you for your API endpoint and secret, then
+                  create <code>figma-plugin/ui.html</code> with your configuration. This file
+                  is gitignored to keep your secrets safe.
                 </p>
               </div>
 
               <div className="space-y-4">
-                <h4 className="font-medium">Configure your secrets</h4>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Edit <code>figma-plugin/ui.html</code> and update the configuration section at the top:
-                </p>
-                <div className="bg-foreground/5 p-4 rounded-lg border border-border/50 overflow-x-auto">
-                  <pre className="text-sm">
-{`const API_ENDPOINT = 'https://your-project.vercel.app/api/generate';
-const API_SECRET = 'your-secret-here';  // Same as PLUGIN_API_SECRET`}
-                  </pre>
-                </div>
+                <h4 className="font-medium">What you&apos;ll need</h4>
+                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                  <li><strong>API Endpoint:</strong> Your Vercel URL (press Enter for default)</li>
+                  <li><strong>API Secret:</strong> The same <code>PLUGIN_API_SECRET</code> you set in Vercel</li>
+                </ul>
               </div>
             </TabsContent>
 
