@@ -205,18 +205,13 @@
       margin-bottom: 16px;
     }
     
-    .api-config {
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #e5e5e5;
-    }
+    /* API config removed - endpoint baked in */
   </style>
 </head>
 <body>
   <div class="tabs">
     <div class="tab active" data-tab="generate">Generate</div>
     <div class="tab" data-tab="context">Project Context</div>
-    <div class="tab" data-tab="settings">Settings</div>
   </div>
   
   <!-- Generate Tab -->
@@ -283,23 +278,17 @@
     <button class="btn btn-primary" id="save-context-btn">Save Context</button>
   </div>
   
-  <!-- Settings Tab -->
-  <div id="settings" class="tab-content">
-    <div class="section api-config">
-      <label>API Endpoint</label>
-      <div class="hint">Your Vercel function URL</div>
-      <input type="text" id="api-endpoint" placeholder="https://your-project.vercel.app/api/generate" />
-    </div>
-    <button class="btn btn-secondary" id="save-settings-btn">Save Settings</button>
-  </div>
+  <!-- Settings removed - API endpoint baked in -->
 
   <script>
     // State
+    // API endpoint - baked in after Vercel deployment
+    const API_ENDPOINT = 'https://figma-copy-assistant.vercel.app/api/generate';
+    
     let state = {
       selectedText: null,
       hasSelection: false,
       projectContext: '',
-      apiEndpoint: localStorage.getItem('copy-assistant-api') || '',
       generatedText: ''
     };
     
@@ -316,7 +305,6 @@
     const loadingEl = document.getElementById('loading');
     const errorEl = document.getElementById('error');
     const contextEl = document.getElementById('project-context');
-    const apiEndpointEl = document.getElementById('api-endpoint');
     
     // Tab switching
     tabs.forEach(tab => {
@@ -343,11 +331,6 @@
         showError('Please enter what you need');
         return;
       }
-      if (!state.apiEndpoint) {
-        showError('Please configure API endpoint in Settings');
-        return;
-      }
-      
       hideError();
       resultEl.style.display = 'none';
       loadingEl.style.display = 'block';
@@ -357,7 +340,7 @@
         pluginMessage: { 
           type: 'generate', 
           prompt,
-          apiEndpoint: state.apiEndpoint
+          apiEndpoint: API_ENDPOINT
         } 
       }, '*');
     });
@@ -381,12 +364,7 @@
       }, '*');
     });
     
-    // Save settings
-    document.getElementById('save-settings-btn').addEventListener('click', () => {
-      state.apiEndpoint = apiEndpointEl.value;
-      localStorage.setItem('copy-assistant-api', state.apiEndpoint);
-      alert('Settings saved!');
-    });
+    // Settings removed - API endpoint baked in
     
     // Handle messages from plugin
     window.onmessage = (event) => {
@@ -398,7 +376,6 @@
         state.selectedText = msg.selectedText;
         state.hasSelection = msg.hasSelection;
         contextEl.value = state.projectContext;
-        apiEndpointEl.value = state.apiEndpoint;
         updateSelectionUI();
       }
       
