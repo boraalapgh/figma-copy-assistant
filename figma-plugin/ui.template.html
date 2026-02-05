@@ -280,7 +280,7 @@
     
     <div id="generate-form" style="display: none;">
       <div id="element-context-section" class="element-context" style="display: none;">
-        <span class="element-context-label">Element:</span>
+        <span class="element-context-label">Component:</span>
         <span id="element-context-text"></span>
       </div>
 
@@ -404,7 +404,7 @@
     generateBtn.addEventListener('click', () => {
       const prompt = promptEl.value.trim();
       if (!prompt) {
-        showError('Please enter what you need');
+        showError('Enter what you need');
         return;
       }
       hideError();
@@ -489,14 +489,30 @@
         generateForm.style.display = 'block';
         currentTextEl.textContent = state.selectedText || '(empty)';
 
-        // Display element context
+        // Display element context - show component + layer name (prop)
         if (state.elementContext) {
           const ctx = state.elementContext;
           const parts = [];
-          if (ctx.layerName) parts.push(ctx.layerName);
-          if (ctx.componentName) parts.push(`in ${ctx.componentName}`);
-          elementContextText.textContent = parts.join(' ') || 'Unknown element';
-          elementContextSection.style.display = 'block';
+
+          // Add component name
+          if (ctx.componentName) {
+            parts.push(ctx.componentName);
+          } else if (ctx.componentPath && ctx.componentPath.length > 0) {
+            parts.push(ctx.componentPath[ctx.componentPath.length - 1]);
+          }
+
+          // Add layer name (prop) if it's not just the text content
+          // Layer names that look like actual names (not long text) are likely prop names
+          if (ctx.layerName && ctx.layerName.length <= 40 && !ctx.layerName.includes('\n')) {
+            parts.push(ctx.layerName);
+          }
+
+          if (parts.length > 0) {
+            elementContextText.textContent = parts.join(' → ');
+            elementContextSection.style.display = 'block';
+          } else {
+            elementContextSection.style.display = 'none';
+          }
         } else {
           elementContextSection.style.display = 'none';
         }

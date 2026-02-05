@@ -2,154 +2,22 @@
 // GoodHabitz Design Team
 
 const PLUGIN_DATA_KEY = 'copy-assistant-context';
+const HISTORY_DATA_KEY = 'copy-assistant-history';
+const MAX_HISTORY_ENTRIES = 40;
+const MAX_SNIPPET_LENGTH = 160;
+const MAX_SURROUNDING_CHARS = 4000;
+const PER_LEVEL_LIMIT = 10;
 
-// System prompt - constant across all projects (GoodHabitz UX Writing Guidelines)
-const SYSTEM_PROMPT = `You are a specialized UX Writing Agent for GoodHabitz, a B2B e-learning company creating soft skills content. You craft clear, user-centered interface copy that guides users seamlessly while maintaining brand consistency.
+type HistoryEntry = {
+  timestamp: string;
+  layerName: string;
+  componentPath: string[];
+  userRequest: string;
+  generatedText: string;
+};
 
-## Brand Foundation
-
-GoodHabitz mission: Unlock growth by making learning a habit. Since 2011, we've aimed to give everyone a chance to develop themselves and ignite their joy of learning.
-
-Across every touchpoint, GoodHabitz should feel:
-- Meaningful — purposeful, relevant, focused
-- Invested — caring, committed, dedicated
-- Trustworthy — steady, reliable, consistent
-- Human — warm, relatable, easy to connect with
-
-## Brand Voice
-
-All copy must be:
-
-**Approachable**
-- Speak like a trusted friend who happens to be a learning expert
-- Be conversational and warm, never corporate or formal
-- Add delight at the right moments without overwhelming the message
-
-**Empowering**
-- Focus on possibilities, not problems
-- Leave people feeling capable and motivated, never discouraged or ashamed
-- Celebrate progress and show what's possible
-
-**Inclusive**
-- Communicate clearly so content resonates with all backgrounds
-- Make complex ideas simple and actionable; avoid jargon
-- Respect cultural differences for our global audience
-
-## Audience-Specific Tone
-
-Apply the appropriate emotional approach based on audience (check project context for audience info):
-
-**For Admins → Be a Trusted Partner**
-We want Admins to feel: Supported by someone dependable, Guided by real expertise, Seen and understood in their challenges, Confident they're making the right decisions.
-Emotional tone: Professional but not cold. Caring but not sentimental. Clear but not blunt. Confident but not pushy.
-How we achieve this: Anticipate questions before confusion appears. Show understanding of their pressures without dramatising. Reinforce they're guided by expertise, not guesswork.
-
-**For Learners → Be a Motivating Mentor**
-We want Learners to feel: Cared for and encouraged, Motivated to take the next step, Energised and curious, Supported by someone who believes in them.
-Emotional tone: Warm but not soft. Vibrant but not chaotic. Honest but not harsh. Playful but not childish.
-How we achieve this: Notice small steps and reflect them back with warmth. Highlight progress in a way that feels personal. Offer reinforcement that feels human, not gamified. Celebrate growth without pressure or comparison. Give them a sense of always moving forward.
-
-## UX Writing Best Practices
-
-**Writing for Global Audiences**
-- Use plain language at a 7th grade reading level
-- Avoid jargon, idioms, jokes, or cultural references that may not localise well
-
-**Clarity & Scannability**
-- Keep text short; one concept per sentence
-- Frontload key information
-- Use progressive disclosure — reveal details as they become relevant
-- Emphasise user benefits
-
-**Addressing Users**
-- Use imperative tone and second person ("you/your") for instructions
-- Avoid first person ("I/my")
-- Avoid "we" except when describing company actions
-- Focus on benefits to the user, not actions taken by GoodHabitz
-
-**Language & Grammar**
-- Use present tense for product behaviour
-- Apply sentence-case capitalisation for all UI elements
-- Use active voice
-- Use Oxford comma when necessary for clarity
-- Use consistent terminology — same verb/label for identical actions
-- Write conversationally; use contractions where natural
-- Use British English spelling (e.g., "organisation" not "organization")
-
-**Button Copy**
-- Use verb + object wherever possible (e.g., "Save draft" not "Save")
-- Match the button verb to the header verb
-- Keep to 2 words and 20 characters where possible
-- No punctuation unless an apostrophe is needed
-- Use imperative tone for primary actions
-
-**Error Messages**
-- Explain what happened, why (if helpful), and how to fix it
-- Avoid blame language, technical jargon, and error codes
-- Friendly tone, but avoid "Sorry!" or "Whoops!"
-- For serious errors, use a serious tone without getting technical
-- If user-caused, use passive voice to avoid blame
-- Prioritise clarity and next steps over exhaustive information
-
-**Accessibility & Inclusion**
-- Avoid directional terms ("left/right", "above/below")
-- Use gender-neutral language
-- Keep text concise for translation and screen-reader usability
-
-**Structure**
-- Show essential information first
-- Break complex processes into manageable steps
-- Use bullet points and short paragraphs only when needed
-- Write clear headings that describe content and align with CTAs
-- Use imperative mood in headers where it makes sense
-
-**Punctuation**
-- Omit periods for single fragments and UI labels
-- Use periods for multi-sentence text
-- Skip colons after labels
-- Use ellipses for in-progress states
-- Use exclamation points sparingly. Never use more than one in a component.
-
-## Quick Reference
-
-Do: Speak like a human, Use positive language, Be mindful of cultural differences, Let excitement come through in tone and word choice, Use British English
-Don't: Use corporate or academic jargon, Motivate with negativity, Use language that could be offensive or misunderstood, Use emojis or multiple exclamation points, Use American spellings or slang
-
-## Decision Framework
-
-Use the UI ELEMENT context provided to understand what you're writing for. Consider:
-1. What does the user need to know at this moment?
-2. What action do we want them to take?
-3. How can we reduce their uncertainty or anxiety?
-4. Does this align with brand voice while serving user needs?
-5. Will this make sense to someone unfamiliar with our product?
-
-## Output Format
-
-Label all output clearly when multiple elements are needed:
-- Header: [text]
-- Primary CTA: [text]
-- Body: [text]
-- Exit CTA: [text]
-
-Return ONLY the copy text unless asked for alternatives or explanations.
-
-## Voice Examples
-
-**Approachable**
-Good: "We couldn't find that account. Check your email and try again."
-Avoid: "We are unable to verify that account. Please confirm the email address and reattempt logging in."
-
-**Empowering**
-Good: "Ready to add another skill to your toolkit? Start your next course."
-Avoid: "You're missing key skills! Start your next course to catch up."
-
-**Inclusive**
-Good: "See how your team is learning and growing."
-Avoid: "Discover comprehensive analytical insights into organisational learning engagement metrics."`;
-
-// Show the UI
-figma.showUI(__html__, { width: 320, height: 400 });
+// Show the UI (themeColors enables resizing)
+figma.showUI(__html__, { width: 320, height: 480, themeColors: true });
 
 // Get current project context from file
 function getProjectContext(): string {
@@ -163,9 +31,17 @@ function setProjectContext(context: string): void {
 
 // Get selected text content
 function getSelectedText(): string | null {
+  const selectedNode = getSelectedTextNode();
+  if (selectedNode) {
+    return selectedNode.characters;
+  }
+  return null;
+}
+
+function getSelectedTextNode(): TextNode | null {
   const selection = figma.currentPage.selection;
   if (selection.length === 1 && selection[0].type === 'TEXT') {
-    return (selection[0] as TextNode).characters;
+    return selection[0] as TextNode;
   }
   return null;
 }
@@ -202,6 +78,236 @@ function getElementContext(): { layerName: string; componentName: string | null;
   }
 
   return { layerName, componentName, componentPath };
+}
+
+function getGenerationHistory(): HistoryEntry[] {
+  const raw = figma.root.getPluginData(HISTORY_DATA_KEY);
+  if (!raw) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((entry) => entry && typeof entry === 'object');
+  } catch {
+    return [];
+  }
+}
+
+function saveGenerationHistory(entries: HistoryEntry[]): void {
+  figma.root.setPluginData(HISTORY_DATA_KEY, JSON.stringify(entries));
+}
+
+function appendHistoryEntry(entry: HistoryEntry): void {
+  const entries = getGenerationHistory();
+  entries.unshift(entry);
+  saveGenerationHistory(entries.slice(0, MAX_HISTORY_ENTRIES));
+}
+
+function normalizeText(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  if (maxLength <= 3) {
+    return text.slice(0, maxLength);
+  }
+  return `${text.slice(0, maxLength - 3)}...`;
+}
+
+function formatNodeType(type: string): string {
+  return type
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function formatAncestorLabel(node: BaseNode, level: number, relation: 'Ancestor' | 'Sibling'): string {
+  const typeLabel = formatNodeType(node.type);
+  const nameSuffix = node.name ? ` "${node.name}"` : '';
+  return `Level ${level} • ${relation} ${typeLabel}${nameSuffix}`;
+}
+
+function hasChildren(node: BaseNode): node is BaseNode & ChildrenMixin {
+  return 'children' in node;
+}
+
+function collectTextFromNode(options: {
+  node: BaseNode;
+  label: string;
+  output: string[];
+  seen: Set<string>;
+  levelCount: { value: number };
+  perLevelLimit: number;
+  totalChars: { value: number };
+  totalCharLimit: number;
+  maxSnippetLength: number;
+  skipNode?: BaseNode | null;
+}): boolean {
+  const {
+    node,
+    label,
+    output,
+    seen,
+    levelCount,
+    perLevelLimit,
+    totalChars,
+    totalCharLimit,
+    maxSnippetLength,
+    skipNode
+  } = options;
+
+  if (levelCount.value >= perLevelLimit || totalChars.value >= totalCharLimit) {
+    return true;
+  }
+
+  if (skipNode && node === skipNode) {
+    return false;
+  }
+
+  if (node.type === 'TEXT') {
+    const raw = (node as TextNode).characters;
+    const normalized = normalizeText(raw);
+    if (normalized && !seen.has(normalized)) {
+      const remaining = totalCharLimit - totalChars.value;
+      if (remaining <= 0) {
+        return true;
+      }
+      const allowed = Math.min(maxSnippetLength, remaining);
+      const snippet = truncateText(normalized, allowed);
+      if (snippet) {
+        seen.add(normalized);
+        output.push(`${label}: "${snippet}"`);
+        levelCount.value += 1;
+        totalChars.value += snippet.length;
+        if (levelCount.value >= perLevelLimit || totalChars.value >= totalCharLimit) {
+          return true;
+        }
+      }
+    }
+  }
+
+  if (hasChildren(node)) {
+    for (const child of node.children) {
+      if (collectTextFromNode({
+        node: child,
+        label,
+        output,
+        seen,
+        levelCount,
+        perLevelLimit,
+        totalChars,
+        totalCharLimit,
+        maxSnippetLength,
+        skipNode
+      })) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function buildSurroundingCopyContext(
+  textNode: TextNode,
+  maxLevels = 4,
+  perLevelLimit = PER_LEVEL_LIMIT,
+  totalCharLimit = MAX_SURROUNDING_CHARS
+): string {
+  const snippets: string[] = [];
+  const seen = new Set<string>();
+  const totalChars = { value: 0 };
+
+  let current: BaseNode | null = textNode.parent;
+  let previous: BaseNode | null = textNode;
+  let level = 1;
+
+  while (current && current.type !== 'PAGE' && current.type !== 'DOCUMENT' && level <= maxLevels) {
+    const levelCount = { value: 0 };
+    const ancestorLabel = formatAncestorLabel(current, level, 'Ancestor');
+
+    collectTextFromNode({
+      node: current,
+      label: ancestorLabel,
+      output: snippets,
+      seen,
+      levelCount,
+      perLevelLimit,
+      totalChars,
+      totalCharLimit,
+      maxSnippetLength: MAX_SNIPPET_LENGTH,
+      skipNode: previous
+    });
+
+    const parent = current.parent;
+    if (parent && hasChildren(parent)) {
+      for (const sibling of parent.children) {
+        if (sibling === current) {
+          continue;
+        }
+        const siblingLabel = formatAncestorLabel(sibling, level, 'Sibling');
+        const shouldStop = collectTextFromNode({
+          node: sibling,
+          label: siblingLabel,
+          output: snippets,
+          seen,
+          levelCount,
+          perLevelLimit,
+          totalChars,
+          totalCharLimit,
+          maxSnippetLength: MAX_SNIPPET_LENGTH,
+          skipNode: null
+        });
+        if (shouldStop) {
+          break;
+        }
+      }
+    }
+
+    if (totalChars.value >= totalCharLimit) {
+      break;
+    }
+
+    previous = current;
+    current = current.parent;
+    level += 1;
+  }
+
+  if (snippets.length === 0) {
+    return 'No nearby copy detected.';
+  }
+
+  return snippets.join('\n');
+}
+
+function formatHistoryForRequest(entries: HistoryEntry[]): string {
+  if (entries.length === 0) {
+    return '';
+  }
+
+  return entries.map((entry) => {
+    const parts: string[] = [];
+    parts.push(entry.timestamp);
+    if (entry.layerName) {
+      parts.push(`Layer: "${truncateText(entry.layerName, 60)}"`);
+    }
+    if (entry.componentPath && entry.componentPath.length > 0) {
+      parts.push(`Path: ${entry.componentPath.join(' > ')}`);
+    }
+    if (entry.userRequest) {
+      parts.push(`Prompt: ${truncateText(entry.userRequest, 140)}`);
+    }
+    if (entry.generatedText) {
+      parts.push(`Output: ${truncateText(entry.generatedText, 160)}`);
+    }
+    return parts.join(' • ');
+  }).join('\n');
 }
 
 // Set text on selected node
@@ -254,7 +360,12 @@ figma.ui.onmessage = async (msg: {
   else if (msg.type === 'generate') {
     const projectContext = getProjectContext();
     const selectedText = getSelectedText();
+    const selectedNode = getSelectedTextNode();
     const elementContext = getElementContext();
+    const surroundingCopyContext = selectedNode
+      ? buildSurroundingCopyContext(selectedNode)
+      : '';
+    const generationHistory = formatHistoryForRequest(getGenerationHistory());
 
     if (!msg.apiEndpoint) {
       figma.notify('API endpoint not configured', { error: true });
@@ -282,12 +393,13 @@ figma.ui.onmessage = async (msg: {
       ? 'Admin (use Trusted Partner tone: professional, caring, clear, confident)'
       : 'Learner (use Motivating Mentor tone: warm, vibrant, honest, playful)';
 
-    // Build the full prompt
+    // Build the request payload (system prompt now lives server-side)
     const fullPrompt = {
-      systemPrompt: SYSTEM_PROMPT,
       projectContext: projectContext || 'No project context set.',
       audience: audienceInfo,
       elementContext: elementInfo || 'No element context available.',
+      surroundingCopyContext,
+      generationHistory,
       currentText: selectedText || '',
       userRequest: msg.prompt
     };
@@ -314,6 +426,15 @@ figma.ui.onmessage = async (msg: {
 
       const data = await response.json();
       console.log('API response:', data);
+      if (selectedNode && data?.text) {
+        appendHistoryEntry({
+          timestamp: new Date().toISOString(),
+          layerName: elementContext?.layerName || selectedNode.name || '',
+          componentPath: elementContext?.componentPath || [],
+          userRequest: msg.prompt || '',
+          generatedText: data.text
+        });
+      }
       figma.ui.postMessage({ type: 'generated', text: data.text });
 
     } catch (error) {
