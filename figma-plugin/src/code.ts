@@ -405,6 +405,7 @@ figma.ui.onmessage = async (msg: {
     };
     
     try {
+      console.log('Request payload:', fullPrompt);
       console.log('Calling API:', msg.apiEndpoint);
 
       const response = await fetch(msg.apiEndpoint, {
